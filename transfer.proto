@@ -1,0 +1,9 @@
+syntax="proto3";
+
+package main;
+
+message Transfer {
+	string from_account = 1;
+	string to_account = 2;
+	uint64 age = 3;
+}

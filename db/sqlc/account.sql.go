@@ -9,23 +9,25 @@ import (
 
 const createAccount = `-- name: CreateAccount :one
 INSERT INTO accounts (
-  public_key, private_key
+  account, public_key, private_key
 ) VALUES (
-  $1, $2
+  $1, $2, $3
 )
-RETURNING id, amount, nonce, sign, public_key, private_key
+RETURNING id, account, amount, nonce, sign, public_key, private_key
 `
 
 type CreateAccountParams struct {
+	Account    string `json:"account"`
 	PublicKey  string `json:"public_key"`
 	PrivateKey string `json:"private_key"`
 }
 
 func (q *Queries) CreateAccount(ctx context.Context, arg CreateAccountParams) (Account, error) {
-	row := q.db.QueryRowContext(ctx, createAccount, arg.PublicKey, arg.PrivateKey)
+	row := q.db.QueryRowContext(ctx, createAccount, arg.Account, arg.PublicKey, arg.PrivateKey)
 	var i Account
 	err := row.Scan(
 		&i.ID,
+		&i.Account,
 		&i.Amount,
 		&i.Nonce,
 		&i.Sign,
@@ -45,7 +47,7 @@ func (q *Queries) DeleteAccount(ctx context.Context, id int64) error {
 }
 
 const getAccount = `-- name: GetAccount :one
-SELECT id, amount, nonce, sign, public_key, private_key FROM accounts
+SELECT id, account, amount, nonce, sign, public_key, private_key FROM accounts
 WHERE id = $1 LIMIT 1
 `
 
@@ -54,6 +56,27 @@ func (q *Queries) GetAccount(ctx context.Context, id int64) (Account, error) {
 	var i Account
 	err := row.Scan(
 		&i.ID,
+		&i.Account,
+		&i.Amount,
+		&i.Nonce,
+		&i.Sign,
+		&i.PublicKey,
+		&i.PrivateKey,
+	)
+	return i, err
+}
+
+const getAccountByName = `-- name: GetAccountByName :one
+SELECT id, account, amount, nonce, sign, public_key, private_key FROM accounts
+WHERE account = $1 LIMIT 1
+`
+
+func (q *Queries) GetAccountByName(ctx context.Context, account string) (Account, error) {
+	row := q.db.QueryRowContext(ctx, getAccountByName, account)
+	var i Account
+	err := row.Scan(
+		&i.ID,
+		&i.Account,
 		&i.Amount,
 		&i.Nonce,
 		&i.Sign,
@@ -64,7 +87,7 @@ func (q *Queries) GetAccount(ctx context.Context, id int64) (Account, error) {
 }
 
 const listAccount = `-- name: ListAccount :many
-SELECT id, amount, nonce, sign, public_key, private_key FROM accounts
+SELECT id, account, amount, nonce, sign, public_key, private_key FROM accounts
 ORDER BY id
 LIMIT $1
 OFFSET $2
@@ -86,6 +109,7 @@ func (q *Queries) ListAccount(ctx context.Context, arg ListAccountParams) ([]Acc
 		var i Account
 		if err := rows.Scan(
 			&i.ID,
+			&i.Account,
 			&i.Amount,
 			&i.Nonce,
 			&i.Sign,
@@ -108,7 +132,7 @@ func (q *Queries) ListAccount(ctx context.Context, arg ListAccountParams) ([]Acc
 const updateAccount = `-- name: UpdateAccount :one
 UPDATE accounts SET Amount = Amount + $2
 WHERE id = $1
-RETURNING id, amount, nonce, sign, public_key, private_key
+RETURNING id, account, amount, nonce, sign, public_key, private_key
 `
 
 type UpdateAccountParams struct {
@@ -121,6 +145,7 @@ func (q *Queries) UpdateAccount(ctx context.Context, arg UpdateAccountParams) (A
 	var i Account
 	err := row.Scan(
 		&i.ID,
+		&i.Account,
 		&i.Amount,
 		&i.Nonce,
 		&i.Sign,

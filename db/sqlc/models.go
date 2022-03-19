@@ -8,6 +8,7 @@ import (
 
 type Account struct {
 	ID         int64          `json:"id"`
+	Account    string         `json:"account"`
 	Amount     int64          `json:"amount"`
 	Nonce      int64          `json:"nonce"`
 	Sign       sql.NullString `json:"sign"`
